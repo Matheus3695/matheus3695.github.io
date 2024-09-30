@@ -124,6 +124,7 @@
 
         <label for="difficulty">Dificuldade da Mão de Obra:</label>
         <select id="difficulty">
+            <option value="60">Cadeiras (R$50)</option>
             <option value="200">Simples (R$200)</option>
             <option value="250">Médio (R$250)</option>
             <option value="300">Difícil (R$300)</option>
@@ -132,9 +133,9 @@
 
         <label for="materialType">Tipo de Material:</label>
         <select id="materialType">
-            <option value="20">Suede (R$20/m)</option>
-            <option value="40">Linho (R$40/m)</option>
-            <option value="45">Courvin (R$45/m)</option>
+            <option value="20">Suede</option>
+            <option value="40">Linho</option>
+            <option value="45">Courvin</option>
         </select>
 
         <label for="materialLength">Comprimento do Material (m):</label>
@@ -182,6 +183,7 @@
             }
         }
 
+        
         function calculateBudget() {
             const clientName = document.getElementById('clientName').value;
             const date = document.getElementById('date').value;
@@ -189,13 +191,15 @@
             const materialTypeCost = parseFloat(document.getElementById('materialType').value);
             const materialLength = parseFloat(document.getElementById('materialLength').value);
             const foamExchange = document.getElementById('foamExchange').value;
-            const numSeats = parseInt(document.getElementById('numSeats').value);
+            const numSeats = parseInt(document.getElementById('numSeats').value)
+            const materialUsed = document.getElementById('materialType').options[document.getElementById('materialType').selectedIndex].text;
+
 
             let totalFoamCost = 0;
             if (foamExchange === 'yes') {
                 const foamLength = parseFloat(document.getElementById('foamLength').value);
                 const foamThickness = parseFloat(document.getElementById('foamThickness').value);
-                const foamCostPerCm = 25; // Custo da espuma por cm
+                const foamCostPerCm = 29; // Custo da espuma por cm
                 totalFoamCost = foamCostPerCm * foamThickness * foamLength; // Custo total da espuma
             }
 
@@ -204,16 +208,16 @@
 
             // Cálculo total
             const totalLabor = difficultyCost * numSeats;
-            const totalCost = totalLabor + totalMaterialCost + totalFoamCost + 100; // Taxa de entrega de R$100
+            const totalCost = totalLabor + totalMaterialCost + totalFoamCost + 150; // Taxa de entrega de R$150
 
             // Exibir resultado no modal
             document.getElementById('output').innerHTML = `
                 <strong>Cliente:</strong> ${clientName} <br>
                 <strong>Data:</strong> ${date} <br>
                 <strong>Custo da Mão de Obra:</strong> R$ ${totalLabor.toFixed(2)} <br>
-                <strong>Custo dos Materiais:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
+                <strong>Custo do ${materialUsed}:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
                 ${foamExchange === 'yes' ? `<strong>Custo da Espuma:</strong> R$ ${totalFoamCost.toFixed(2)} <br>` : ''}
-                <strong>Taxa de Entrega:</strong> R$ 100,00 <br>
+                <strong>Taxa de Entrega:</strong> R$ 150,00 <br>
                 <strong>Custo Total:</strong> R$ ${totalCost.toFixed(2)}
             `;
             document.getElementById('myModal').style.display = "block";
@@ -233,14 +237,46 @@
         }
 
         function copyTotal() {
-            const totalCost = document.getElementById('output').innerText.match(/Custo Total: R\$ ([\d,.]+)/)[1];
-            const message = `Olá! O seu orçamento total é de R$ ${totalCost}. Agradecemos pela sua preferência!`;
-            navigator.clipboard.writeText(message).then(() => {
-                alert("Valor total copiado para a área de transferência!");
-            }, (err) => {
-                console.error('Erro ao copiar: ', err);
-            });
-        }
+    // Obtém o elemento de saída
+    const outputElement = document.getElementById('output');
+    const materialUsed = document.getElementById('materialType').options[document.getElementById('materialType').selectedIndex].text;
+
+    // Verifica se o elemento existe
+    if (!outputElement) {
+        console.error('Elemento com o id "output" não encontrado.');
+        return;
+    }
+
+    // Usa expressão regular para capturar o custo total
+    const totalCostMatch = outputElement.innerText.match(/Custo Total: R\$ ([\d,.]+)/);
+
+    // Verifica se a correspondência foi encontrada
+    if (!totalCostMatch || !totalCostMatch[1]) {
+        console.error('Não foi possível encontrar o custo total no texto de saída.');
+        return;
+    }
+
+    // Obtém o custo total
+    const totalCost = totalCostMatch[1];
+
+    // Verifica se materialUsed está definido
+    if (typeof materialUsed === 'undefined') {
+        console.error('A variável "materialUsed" não está definida.');
+        return;
+    }
+
+    // Cria a mensagem a ser copiada
+    const message = `O orçamento no material ${materialUsed} ficou no total de R$ ${totalCost}. Agradecemos pela sua preferência!`;
+
+    // Copia a mensagem para a área de transferência
+    navigator.clipboard.writeText(message)
+        .then(() => {
+            alert("Valor total copiado para a área de transferência!");
+        })
+        .catch((err) => {
+            console.error('Erro ao copiar: ', err);
+        });
+}
     </script>
 </body>
 </html>
