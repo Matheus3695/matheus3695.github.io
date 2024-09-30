@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Orçamento - LR Decor</title>
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333; /* Cinza escuro */
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            border: 2px solid #d4af37;
+            max-width: 100%;
+            width: 90%;
+            box-sizing: border-box; /* Garantir que padding não afete o tamanho */
+        }
+        h1 {
+            color: #d4af37; /* Dourado */
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        img {
+            width: 100%; 
+            max-width: 150px; 
+            display: block; 
+            margin: 0 auto 20px auto;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #003366;
+            color: white;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #00509e;
+        }
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0, 0, 0, 0.4); 
+            padding-top: 60px; 
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; 
+            border-radius: 5px;
+            color: black;
+            box-sizing: border-box;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            button {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Orçamento</h1>
+        <img src="assets/logo.png" alt="Logo LR Decor">
+        <label for="clientName">Nome do Cliente:</label>
+        <input type="text" id="clientName" placeholder="Digite o nome do cliente">
+
+        <label for="date">Data do Orçamento:</label>
+        <input type="date" id="date">
+
+        <label for="difficulty">Dificuldade da Mão de Obra:</label>
+        <select id="difficulty">
+            <option value="200">Simples (R$200)</option>
+            <option value="250">Médio (R$250)</option>
+            <option value="300">Difícil (R$300)</option>
+            <option value="400">Detalhado (R$400)</option>
+        </select>
+
+        <label for="materialType">Tipo de Material:</label>
+        <select id="materialType">
+            <option value="20">Suede (R$20/m)</option>
+            <option value="40">Linho (R$40/m)</option>
+            <option value="45">Courvin (R$45/m)</option>
+        </select>
+
+        <label for="materialLength">Comprimento do Material (m):</label>
+        <input type="number" id="materialLength" placeholder="Digite o comprimento do material" min="0" step="0.1">
+
+        <label for="foamExchange">Trocar Espuma?</label>
+        <select id="foamExchange" onchange="toggleFoamOptions()">
+            <option value="no">Não</option>
+            <option value="yes">Sim</option>
+        </select>
+
+        <div id="foamOptions" class="hidden">
+            <label for="foamLength">Comprimento da Espuma (m):</label>
+            <input type="number" id="foamLength" placeholder="Digite o comprimento da espuma" min="0" step="0.1">
+
+            <label for="foamThickness">Espessura da Espuma (cm):</label>
+            <input type="number" id="foamThickness" placeholder="Digite a espessura da espuma" min="1">
+        </div>
+
+        <label for="numSeats">Número de Assentos:</label>
+        <input type="number" id="numSeats" placeholder="Digite o número de assentos" min="1">
+
+        <button onclick="calculateBudget()">Calcular Orçamento</button>
+    </div>
+
+    <!-- Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Resultado do Orçamento</h2>
+            <div id="output"></div>
+            <button onclick="copyToClipboard()">Copiar Orçamento Completo</button>
+            <button onclick="copyTotal()">Copiar Apenas Orçamento Total</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleFoamOptions() {
+            const foamExchange = document.getElementById('foamExchange').value;
+            const foamOptions = document.getElementById('foamOptions');
+            if (foamExchange === 'yes') {
+                foamOptions.classList.remove('hidden');
+            } else {
+                foamOptions.classList.add('hidden');
+            }
+        }
+
+        function calculateBudget() {
+            const clientName = document.getElementById('clientName').value;
+            const date = document.getElementById('date').value;
+            const difficultyCost = parseFloat(document.getElementById('difficulty').value);
+            const materialTypeCost = parseFloat(document.getElementById('materialType').value);
+            const materialLength = parseFloat(document.getElementById('materialLength').value);
+            const foamExchange = document.getElementById('foamExchange').value;
+            const numSeats = parseInt(document.getElementById('numSeats').value);
+
+            let totalFoamCost = 0;
+            if (foamExchange === 'yes') {
+                const foamLength = parseFloat(document.getElementById('foamLength').value);
+                const foamThickness = parseFloat(document.getElementById('foamThickness').value);
+                const foamCostPerCm = 25; // Custo da espuma por cm
+                totalFoamCost = foamCostPerCm * foamThickness * foamLength; // Custo total da espuma
+            }
+
+            // Cálculo do custo dos materiais
+            const totalMaterialCost = materialTypeCost * materialLength;
+
+            // Cálculo total
+            const totalLabor = difficultyCost * numSeats;
+            const totalCost = totalLabor + totalMaterialCost + totalFoamCost + 100; // Taxa de entrega de R$100
+
+            // Exibir resultado no modal
+            document.getElementById('output').innerHTML = `
+                <strong>Cliente:</strong> ${clientName} <br>
+                <strong>Data:</strong> ${date} <br>
+                <strong>Custo da Mão de Obra:</strong> R$ ${totalLabor.toFixed(2)} <br>
+                <strong>Custo dos Materiais:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
+                ${foamExchange === 'yes' ? `<strong>Custo da Espuma:</strong> R$ ${totalFoamCost.toFixed(2)} <br>` : ''}
+                <strong>Taxa de Entrega:</strong> R$ 100,00 <br>
+                <strong>Custo Total:</strong> R$ ${totalCost.toFixed(2)}
+            `;
+            document.getElementById('myModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('myModal').style.display = "none";
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('output').innerText;
+            navigator.clipboard.writeText(outputText).then(() => {
+                alert("Orçamento completo copiado para a área de transferência!");
+            }, (err) => {
+                console.error('Erro ao copiar: ', err);
+            });
+        }
+
+        function copyTotal() {
+            const totalCost = document.getElementById('output').innerText.match(/Custo Total: R\$ ([\d,.]+)/)[1];
+            const message = `Olá! O seu orçamento total é de R$ ${totalCost}. Agradecemos pela sua preferência!`;
+            navigator.clipboard.writeText(message).then(() => {
+                alert("Valor total copiado para a área de transferência!");
+            }, (err) => {
+                console.error('Erro ao copiar: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
