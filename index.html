@@ -124,11 +124,11 @@
 
         <label for="difficulty">Dificuldade da Mão de Obra:</label>
         <select id="difficulty">
-            <option value="60">Cadeiras (R$50)</option>
-            <option value="150">Simples (R$150)</option>
-            <option value="200">Médio (R$200)</option>
-            <option value="250">Difícil (R$250)</option>
-            <option value="350">Detalhado (R$350)</option>
+            <option value="60">Cadeiras (R$60)</option>
+            <option value="160">Simples (R$160)</option>
+            <option value="220">Médio (R$220)</option>
+            <option value="320">Difícil (R$320)</option>
+            <option value="400">Detalhado (R$400)</option>
         </select>
 
         <label for="materialType">Tipo de Material:</label>
@@ -216,7 +216,7 @@
 
             // Cálculo total
             const totalLabor = difficultyCost * numSeats;
-            const totalCost = totalLabor + totalMaterialCost + totalFoamCost + 150; // Taxa de entrega de R$150
+            const totalCost = totalLabor + totalMaterialCost + totalFoamCost + 150 + 100; // Taxa de entrega de R$150
 
             // Exibir resultado no modal
             document.getElementById('output').innerHTML = `
@@ -226,6 +226,7 @@
                 <strong>Custo do ${materialUsed}:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
                 ${foamExchange === 'yes' ? `<strong>Custo da Espuma:</strong> R$ ${totalFoamCost.toFixed(2)} <br>` : ''}
                 <strong>Taxa de Entrega:</strong> R$ 150,00 <br>
+                <strong>Materiais Essenciais:</strong> R$ 100,00 <br>
                 <strong>Custo Total:</strong> R$ ${totalCost.toFixed(2)}
             `;
             document.getElementById('myModal').style.display = "block";
