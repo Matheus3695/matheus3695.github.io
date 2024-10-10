@@ -144,6 +144,10 @@
     <option value="61">Madri (61R$)</option>
             <option value="67">Boucle Colo (67R$)</option>
 <option value="70">Velucapri (70R$)</option>
+            <option value="42">Uruguai (42R$)</option>
+  <option value="58">Kansas (58R$)</option>
+<option value="70">Factor (70R$)</option>
+
         </select>
 
         <label for="materialLength">Comprimento do Material (m):</label>
@@ -226,7 +230,7 @@
                 <strong>Custo do ${materialUsed}:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
                 ${foamExchange === 'yes' ? `<strong>Custo da Espuma:</strong> R$ ${totalFoamCost.toFixed(2)} <br>` : ''}
                 <strong>Taxa de Entrega:</strong> R$ 150,00 <br>
-                <strong>Materiais Essenciais:</strong> R$ 100,00 <br>
+                <strong>Taxa de Materiais Essenciais:</strong> R$ 100,00 <br>
                 <strong>Custo Total:</strong> R$ ${totalCost.toFixed(2)}
             `;
             document.getElementById('myModal').style.display = "block";
