@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Vistorias MDU</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --success: #27ae60;
+      --light: #ecf0f1;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f6fa;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .form-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .search-filter {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-filter input, .search-filter button {
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 20px 0;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--primary);
+      color: white;
+    }
+
+    .paginacao {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: opacity 0.3s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid, .search-filter {
+        grid-template-columns: 1fr;
+      }
+
+      .search-filter input, .search-filter button {
+        width: 100%;
+      }
+
+      td {
+        font-size: 14px;
+        padding: 8px;
+      }
+
+      th {
+        font-size: 14px;
+        padding: 10px;
+      }
+
+      button {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Controle de Vistorias MDU</h1>
+    
+    <div class="form-section">
+      <h2>Novo Cadastro</h2>
+      <form id="visitaForm">
+        <div class="form-grid">
+          <div>
+            <h3>Endereço Completo</h3>
+            <input type="text" id="endereco" required>
+          </div>
+          
+          <div>
+            <h3>Nome do Síndico</h3>
+            <input type="text" id="sindico" required>
+          </div>
+          
+          <div>
+            <h3>Data de Contato</h3>
+            <input type="date" id="dataContato" required>
+          </div>
+          
+          <div>
+            <h3>Data da Visita</h3>
+            <input type="date" id="dataVisita">
+          </div>
+          
+          <div>
+            <h3>Agendamento Instalação</h3>
+            <input type="date" id="dataAgendamento">
+          </div>
+          
+          <div>
+            <h3>Telefone</h3>
+            <input type="tel" id="telefone">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <h3>Vistoria Realizada</h3>
+            <label>
+              <input type="checkbox" id="realizada"> Realizada
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Salvar Cadastro</button>
+        <button type="button" class="btn-primary" onclick="editarCancelar()">Cancelar Edição</button>
+      </form>
+    </div>
+
+    <div class="search-filter">
+      <input type="text" id="busca" placeholder="Buscar...">
+      <input type="date" id="dataInicio">
+      <input type="date" id="dataFim">
+      <button class="btn-primary" onclick="filtrarVisitas()">Filtrar</button>
+      <button class="btn-success" onclick="exportarRelatorio()">Exportar TXT</button>
+      <button class="btn-success" onclick="exportarCSV()">Exportar CSV</button>
+      <button class="btn-success" onclick="document.getElementById('importarCSV').click()">Importar CSV</button>
+      <input type="file" id="importarCSV" hidden accept=".csv" onchange="importarCSV(event)">
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Endereço</th>
+            <th>Síndico</th>
+            <th>Contato</th>
+            <th>Visita</th>
+            <th>Agendamento</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="listaVisitas"></tbody>
+      </table>
+    </div>
+
+    <div class="paginacao">
+      <button class="btn-primary" onclick="mudarPagina(-1)">Anterior</button>
+      <span id="paginaAtual">1</span>
+      <button class="btn-primary" onclick="mudarPagina(1)">Próxima</button>
+    </div>
+  </div>
+
+  <script>
+    let editIndex = null;
+    let visitas = JSON.parse(localStorage.getItem('vistorias')) || [];
+    let currentPage = 1;
+    const itemsPerPage = 20;
+    let currentFilter = '';
+
+    function salvarLocalStorage() {
+      localStorage.setItem('vistorias', JSON.stringify(visitas));
+      atualizarTabela();
+    }
+
+    function filtrarVisitas() {
+      currentFilter = document.getElementById('busca').value.toLowerCase();
+      currentPage = 1;
+      atualizarTabela();
+    }
+
+    function mudarPagina(direction) {
+      const totalPages = Math.ceil(getVisitasFiltradas().length / itemsPerPage);
+      currentPage = Math.max(1, Math.min(totalPages, currentPage + direction));
+      atualizarTabela();
+    }
+
+    function getVisitasFiltradas() {
+      const dataInicio = document.getElementById('dataInicio').value;
+      const dataFim = document.getElementById('dataFim').value;
+      
+      return visitas.filter(visita => {
+        const matchesSearch = visita.endereco.toLowerCase().includes(currentFilter) ||
+                              visita.sindico.toLowerCase().includes(currentFilter);
+        const dataContato = new Date(visita.dataContato);
+        const start = dataInicio ? new Date(dataInicio) : null;
+        const end = dataFim ? new Date(dataFim) : null;
+        
+        return matchesSearch &&
+          (!start || dataContato >= start) &&
+          (!end || dataContato <= end);
+      });
+    }
+
+    function atualizarTabela() {
+      const tbody = document.getElementById('listaVisitas');
+      tbody.innerHTML = '';
+      
+      const filtered = getVisitasFiltradas();
+      const start = (currentPage - 1) * itemsPerPage;
+      const paginated = filtered.slice(start, start + itemsPerPage);
+
+      paginated.forEach((visita, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${visita.endereco}</td>
+            <td>${visita.sindico}</td>
+            <td>${visita.dataContato}</td>
+            <td>${visita.dataVisita || '-'}</td>
+            <td>${visita.dataAgendamento || '-'}</td>
+            <td>${visita.status === 'realizada' ? '✔️ Realizada' : 'Pendente'}</td>
+            <td>
+              <button class="btn-primary" onclick="editarVisita(${start + index})">Editar</button>
+              <button class="btn-primary" onclick="excluirVisita(${start + index})">Excluir</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('paginaAtual').textContent = currentPage;
+    }
+
+    document.getElementById('visitaForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const visita = {
+        endereco: document.getElementById('endereco').value,
+        sindico: document.getElementById('sindico').value,
+        dataContato: document.getElementById('dataContato').value,
+        dataVisita: document.getElementById('dataVisita').value,
+        dataAgendamento: document.getElementById('dataAgendamento').value,
+        telefone: document.getElementById('telefone').value,
+        status: document.getElementById('realizada').checked ? 'realizada' : ''
+      };
+
+      if(editIndex !== null) {
+        visitas[editIndex] = visita;
+        editIndex = null;
+      } else {
+        visitas.push(visita);
+      }
+
+      salvarLocalStorage();
+      e.target.reset();
+    });
+
+    function editarVisita(index) {
+      const visita = visitas[index];
+      document.getElementById('endereco').value = visita.endereco;
+      document.getElementById('sindico').value = visita.sindico;
+      document.getElementById('dataContato').value = visita.dataContato;
+      document.getElementById('dataVisita').value = visita.dataVisita;
+      document.getElementById('dataAgendamento').value = visita.dataAgendamento;
+      document.getElementById('telefone').value = visita.telefone;
+      document.getElementById('realizada').checked = visita.status === 'realizada';
+      editIndex = index;
+    }
+
+    function editarCancelar() {
+      document.getElementById('visitaForm').reset();
+      editIndex = null;
+    }
+
+    function excluirVisita(index) {
+      if(confirm('Tem certeza que deseja excluir este registro?')) {
+        visitas.splice(index, 1);
+        salvarLocalStorage();
+      }
+    }
+
+    function exportarRelatorio() {
+      const filtered = getVisitasFiltradas();
+      const data = new Date();
+      const totalContatados = filtered.length;
+      const totalVisitados = filtered.filter(v => v.status === 'realizada').length;
+      const agendamentos = filtered.filter(v => v.dataAgendamento).length;
+      
+      let relatorio = `Relatório de Vistorias MDU - ${data.toLocaleDateString()}\n\n`;
+      relatorio += `Fonte: Arial\n`;
+      relatorio += `Período: ${document.getElementById('dataInicio').value || 'Início'} à ${document.getElementById('dataFim').value || 'Fim'}\n\n`;
+      relatorio += `Endereços contatados: ${totalContatados}\n`;
+      relatorio += `Vistorias realizadas: ${totalVisitados}\n`;
+      relatorio += `Agendamentos de instalação: ${agendamentos}\n\n`;
+      
+      relatorio += "Detalhes das visitas:\n";
+      filtered.forEach(visita => {
+        relatorio += `----------------------------------------\n`;
+        relatorio += `Endereço: ${visita.endereco}\n`;
+        relatorio += `Síndico: ${visita.sindico}\n`;
+        relatorio += `Contato: ${visita.dataContato}\n`;
+        relatorio += `Visita: ${visita.dataVisita || 'N/A'}\n`;
+        relatorio += `Agendamento: ${visita.dataAgendamento || 'N/A'}\n`;
+        relatorio += `Telefone: ${visita.telefone || 'N/A'}\n`;
+        relatorio += `Status: ${visita.status === 'realizada' ? 'Realizada' : 'Pendente'}\n`;
+      });
+      
+      const blob = new Blob([relatorio], {type: 'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `relatorio_${data.getTime()}.txt`;
+      a.click();
+    }
+
+    function exportarCSV() {
+      let csv = 'Endereço,Síndico,Contato,Visita,Agendamento,Telefone,Status\n';
+      const filtered = getVisitasFiltradas();
+      filtered.forEach(visita => {
+        csv += `"${visita.endereco}","${visita.sindico}","${visita.dataContato}","${visita.dataVisita || 'N/A'}","${visita.dataAgendamento || 'N/A'}","${visita.telefone || 'N/A'}","${visita.status === 'realizada' ? 'Realizada' : 'Pendente'}"\n`;
+      });
+      const blob = new Blob([csv], {type: 'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `vistorias_${new Date().getTime()}.csv`;
+      a.click();
+    }
+
+    function importarCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const contents = e.target.result;
+        const linhas = contents.split('\n');
+        // Remove o cabeçalho
+        linhas.shift();
+        linhas.forEach(linha => {
+          if(linha.trim() !== ''){
+            const [endereco, sindico, dataContato, dataVisita, dataAgendamento, telefone, status] = linha.split(',').map(item => item.replace(/"/g, '').trim());
+            visitas.push({
+              endereco,
+              sindico,
+              dataContato,
+              dataVisita: dataVisita !== 'N/A' ? dataVisita : '',
+              dataAgendamento: dataAgendamento !== 'N/A' ? dataAgendamento : '',
+              telefone,
+              status: status === 'Realizada' ? 'realizada' : ''
+            });
+          }
+        });
+        salvarLocalStorage();
+      };
+      reader.readAsText(file);
+    }
+
+    atualizarTabela();
+  </script>
+</body>
+</html>
