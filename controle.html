@@ -11,25 +11,21 @@
       --success: #27ae60;
       --light: #ecf0f1;
     }
-
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
       padding: 20px;
       background-color: #f5f6fa;
     }
-
     .container {
       max-width: 1000px;
       margin: 0 auto;
     }
-
     h1 {
       color: var(--primary);
       text-align: center;
       margin-bottom: 30px;
     }
-
     .form-section {
       background: white;
       padding: 20px;
@@ -37,27 +33,23 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       margin-bottom: 30px;
     }
-
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 15px;
       margin-bottom: 20px;
     }
-
     .search-filter {
       margin: 20px 0;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
-
     .search-filter input, .search-filter button {
       padding: 8px 12px;
       border-radius: 5px;
       border: 1px solid #ddd;
     }
-
     .table-container {
       overflow-x: auto;
       margin: 20px 0;
@@ -65,25 +57,21 @@
       border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 800px;
     }
-
     th, td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #ddd;
       white-space: nowrap;
     }
-
     th {
       background: var(--primary);
       color: white;
     }
-
     .paginacao {
       margin-top: 20px;
       display: flex;
@@ -91,7 +79,6 @@
       justify-content: center;
       flex-wrap: wrap;
     }
-
     button {
       padding: 10px 20px;
       border-radius: 5px;
@@ -99,36 +86,25 @@
       transition: opacity 0.3s;
       border: none;
     }
-
     .btn-primary {
       background: var(--secondary);
       color: white;
     }
-
     .btn-success {
       background: var(--success);
       color: white;
     }
-
     @media (max-width: 768px) {
       .form-grid, .search-filter {
         grid-template-columns: 1fr;
       }
-
       .search-filter input, .search-filter button {
         width: 100%;
       }
-
-      td {
+      td, th {
         font-size: 14px;
         padding: 8px;
       }
-
-      th {
-        font-size: 14px;
-        padding: 10px;
-      }
-
       button {
         width: 100%;
         margin-bottom: 5px;
@@ -194,7 +170,7 @@
       <input type="date" id="dataInicio">
       <input type="date" id="dataFim">
       <button class="btn-primary" onclick="filtrarVisitas()">Filtrar</button>
-      <button class="btn-success" onclick="exportarRelatorio()">Exportar TXT</button>
+      <button class="btn-success" onclick="exportarTXT()">Exportar TXT</button>
       <button class="btn-success" onclick="exportarCSV()">Exportar CSV</button>
       <button class="btn-success" onclick="document.getElementById('importarCSV').click()">Importar CSV</button>
       <input type="file" id="importarCSV" hidden accept=".csv" onchange="importarCSV(event)">
@@ -341,23 +317,12 @@
       }
     }
 
-    function exportarRelatorio() {
+    function exportarTXT() {
       const filtered = getVisitasFiltradas();
       const data = new Date();
-      const totalContatados = filtered.length;
-      const totalVisitados = filtered.filter(v => v.status === 'realizada').length;
-      const agendamentos = filtered.filter(v => v.dataAgendamento).length;
-      
       let relatorio = `Relatório de Vistorias MDU - ${data.toLocaleDateString()}\n\n`;
-      relatorio += `Fonte: Arial\n`;
-      relatorio += `Período: ${document.getElementById('dataInicio').value || 'Início'} à ${document.getElementById('dataFim').value || 'Fim'}\n\n`;
-      relatorio += `Endereços contatados: ${totalContatados}\n`;
-      relatorio += `Vistorias realizadas: ${totalVisitados}\n`;
-      relatorio += `Agendamentos de instalação: ${agendamentos}\n\n`;
-      
-      relatorio += "Detalhes das visitas:\n";
-      filtered.forEach(visita => {
-        relatorio += `----------------------------------------\n`;
+      filtered.forEach((visita, i) => {
+        relatorio += `Registro #${i + 1}\n`;
         relatorio += `Endereço: ${visita.endereco}\n`;
         relatorio += `Síndico: ${visita.sindico}\n`;
         relatorio += `Contato: ${visita.dataContato}\n`;
@@ -365,49 +330,61 @@
         relatorio += `Agendamento: ${visita.dataAgendamento || 'N/A'}\n`;
         relatorio += `Telefone: ${visita.telefone || 'N/A'}\n`;
         relatorio += `Status: ${visita.status === 'realizada' ? 'Realizada' : 'Pendente'}\n`;
+        relatorio += `----------------------------------------\n`;
       });
       
-      const blob = new Blob([relatorio], {type: 'text/plain'});
+      const blob = new Blob([relatorio], {type: 'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
+      a.href = url;
       a.download = `relatorio_${data.getTime()}.txt`;
       a.click();
+      URL.revokeObjectURL(url);
     }
 
     function exportarCSV() {
-      let csv = 'Endereço,Síndico,Contato,Visita,Agendamento,Telefone,Status\n';
       const filtered = getVisitasFiltradas();
+      let csv = 'Endereço,Síndico,Contato,Visita,Agendamento,Telefone,Status\n';
       filtered.forEach(visita => {
         csv += `"${visita.endereco}","${visita.sindico}","${visita.dataContato}","${visita.dataVisita || 'N/A'}","${visita.dataAgendamento || 'N/A'}","${visita.telefone || 'N/A'}","${visita.status === 'realizada' ? 'Realizada' : 'Pendente'}"\n`;
       });
-      const blob = new Blob([csv], {type: 'text/csv'});
+      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
+      a.href = url;
       a.download = `vistorias_${new Date().getTime()}.csv`;
       a.click();
+      URL.revokeObjectURL(url);
     }
 
+    // Função aprimorada para importar CSV, tratando valores entre aspas
     function importarCSV(event) {
       const file = event.target.files[0];
       if (!file) return;
-
+      
       const reader = new FileReader();
       reader.onload = function(e) {
         const contents = e.target.result;
-        const linhas = contents.split('\n');
+        let linhas = contents.split('\n').filter(linha => linha.trim() !== "");
         // Remove o cabeçalho
         linhas.shift();
         linhas.forEach(linha => {
-          if(linha.trim() !== ''){
-            const [endereco, sindico, dataContato, dataVisita, dataAgendamento, telefone, status] = linha.split(',').map(item => item.replace(/"/g, '').trim());
+          // Regex para capturar valores entre aspas ou sem aspas
+          const regex = /(?:"([^"]*)"|([^",]+))(,|$)/g;
+          const valores = [];
+          let match;
+          while ((match = regex.exec(linha)) !== null) {
+            valores.push(match[1] || match[2] || '');
+          }
+          if(valores.length >= 7) {
             visitas.push({
-              endereco,
-              sindico,
-              dataContato,
-              dataVisita: dataVisita !== 'N/A' ? dataVisita : '',
-              dataAgendamento: dataAgendamento !== 'N/A' ? dataAgendamento : '',
-              telefone,
-              status: status === 'Realizada' ? 'realizada' : ''
+              endereco: valores[0],
+              sindico: valores[1],
+              dataContato: valores[2],
+              dataVisita: valores[3] !== 'N/A' ? valores[3] : '',
+              dataAgendamento: valores[4] !== 'N/A' ? valores[4] : '',
+              telefone: valores[5] !== 'N/A' ? valores[5] : '',
+              status: valores[6].toLowerCase() === 'realizada' ? 'realizada' : ''
             });
           }
         });
