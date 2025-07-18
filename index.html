@@ -163,32 +163,20 @@
 
         <label for="materialType">Tipo de Material:</label>
         <select id="materialType">
-            <option value="18">Suede</option>
-            <option value="33">Torck Linho</option>
-            <option value="40">Urban</option>
-            <option value="42">Vintage</option>
-            <option value="49">Velushine</option>
-            <option value="50">Doper</option>
-            <option value="54">Elegance</option>
-            <option value="55">Linho Arizona</option>
-            <option value="61">Madri</option>
-            <option value="67">Boucle Colo</option>
-            <option value="70">Velucapri</option>
-            <option value="42">Uruguai</option>
-            <option value="52">Casco</option>
-            <option value="58">Kansas</option>
-            <option value="70">Factor/Dunas</option>
-            <option value="56">Acqua Block</option>
-            <option value="45">Linhão</option>
+            <option value="13.43">Veludo Chamonix</option>
+            <option value="14.62">Veludo Paris</option>
+            <option value="15.64">Veludo</option>
+            <option value="19.55">Linen Look Pugila</option>
+            <option value="21.34">Boucle Salerno</option>
+            <option value="24.65">Look Valencia</option>
+            <option value="29.41">Look Copertino</option>
         </select>
-
-    </select>
 
     <label for="materialLength">Comprimento do Material (m):</label>
     <input type="number" id="materialLength" placeholder="Digite o comprimento do material" min="0" step="0.1">
 
     <label for="foamExchange">Trocar Espuma?</label>
-    <select id="foamExchange" onchange="toggleFoamOptions()">
+    <select id="foamExchange">
         <option value="no">Não</option>
         <option value="yes">Sim</option>
     </select>
@@ -204,140 +192,181 @@
     <label for="numSeats">Número de Assentos:</label>
     <input type="number" id="numSeats" placeholder="Digite o número de assentos" min="1">
 
-    <!-- Checkbox para Taxa de Entrega -->
     <div class="fee-option">
         <input type="checkbox" id="deliveryFee">
         <label for="deliveryFee">Taxa de Entrega</label>
     </div>
 
-    <!-- Checkbox para Taxa de Material Essencial -->
     <div class="fee-option">
         <input type="checkbox" id="essentialMaterialFee">
         <label for="essentialMaterialFee">Taxa de Material Essencial</label>
     </div>
-    <button onclick="calculateBudget()">Calcular Orçamento</button>
+    <button id="calculateButton">Calcular Orçamento</button>
 </div>
 
-<!-- Modal -->
 <div id="myModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <span class="close" id="closeModalButton">&times;</span>
         <h2>Resultado do Orçamento</h2>
         <div id="output"></div>
-        <button onclick="copyToClipboard()">Copiar Orçamento Completo</button>
-        <button onclick="copyTotal()">Copiar Apenas Orçamento Total</button>
+        <button id="copyFullBudgetButton">Copiar Orçamento Completo</button>
+        <button id="copyTotalButton">Copiar Apenas Orçamento Total</button>
     </div>
 </div>
 
 <script>
-    function toggleFoamOptions() {
-        const foamExchange = document.getElementById('foamExchange').value;
-        const foamOptions = document.getElementById('foamOptions');
-        if (foamExchange === 'yes') {
-            foamOptions.classList.remove('hidden');
-        } else {
-            foamOptions.classList.add('hidden');
-        }
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        // Cache DOM elements for better performance and readability
+        const elements = {
+            clientName: document.getElementById('clientName'),
+            date: document.getElementById('date'),
+            difficulty: document.getElementById('difficulty'),
+            materialType: document.getElementById('materialType'),
+            materialLength: document.getElementById('materialLength'),
+            foamExchange: document.getElementById('foamExchange'),
+            foamOptions: document.getElementById('foamOptions'),
+            foamLength: document.getElementById('foamLength'),
+            foamThickness: document.getElementById('foamThickness'),
+            numSeats: document.getElementById('numSeats'),
+            deliveryFee: document.getElementById('deliveryFee'),
+            essentialMaterialFee: document.getElementById('essentialMaterialFee'),
+            calculateButton: document.getElementById('calculateButton'), // Updated ID for programmatic listener
+            modal: document.getElementById('myModal'),
+            output: document.getElementById('output'),
+            closeModalButton: document.getElementById('closeModalButton'), // Updated ID for programmatic listener
+            copyFullBudgetButton: document.getElementById('copyFullBudgetButton'), // Updated ID for programmatic listener
+            copyTotalButton: document.getElementById('copyTotalButton') // Updated ID for programmatic listener
+        };
 
+        // Constants for fees and foam cost
+        const FEES = {
+            DELIVERY: 150,
+            ESSENTIAL_MATERIAL: 100,
+            FOAM_PER_CM: 32.00 // Updated foam cost: 20.00 * 1.60 = 32.00
+        };
 
-    function calculateBudget() {
-        const clientName = document.getElementById('clientName').value;
-        const date = document.getElementById('date').value;
-        const difficultyCost = parseFloat(document.getElementById('difficulty').value);
-        const materialTypeCost = parseFloat(document.getElementById('materialType').value);
-        const materialLength = parseFloat(document.getElementById('materialLength').value);
-        const foamExchange = document.getElementById('foamExchange').value;
-        const numSeats = parseInt(document.getElementById('numSeats').value);
-        const materialUsed = document.getElementById('materialType').options[document.getElementById('materialType').selectedIndex].text;
-        const isDeliveryFeeIncluded = document.getElementById('deliveryFee').checked;
-        const isEssentialMaterialFeeIncluded = document.getElementById('essentialMaterialFee').checked;
+        // Attach event listeners
+        elements.foamExchange.addEventListener('change', toggleFoamOptions);
+        elements.calculateButton.addEventListener('click', calculateBudget);
+        elements.closeModalButton.addEventListener('click', closeModal);
+        elements.copyFullBudgetButton.addEventListener('click', copyToClipboard);
+        elements.copyTotalButton.addEventListener('click', copyTotal);
 
-        let totalFoamCost = 0;
-        if (foamExchange === 'yes') {
-            const foamLength = parseFloat(document.getElementById('foamLength').value);
-            const foamThickness = parseFloat(document.getElementById('foamThickness').value);
-            const foamCostPerCm = 29; // Custo da espuma por cm
-            totalFoamCost = foamCostPerCm * foamThickness * foamLength; // Custo total da espuma
-        }
-
-        // Definir valores das taxas
-        const deliveryFee = isDeliveryFeeIncluded ? 150: 0;
-        const essentialMaterialFee = isEssentialMaterialFeeIncluded ? 100: 0;
-
-        // Cálculo do custo dos materiais
-        const totalMaterialCost = materialTypeCost * materialLength;
-
-        // Cálculo total
-        const totalLabor = difficultyCost * numSeats;
-        const totalCost = totalLabor + totalMaterialCost + totalFoamCost + deliveryFee + essentialMaterialFee;
-
-        // Exibir resultado no modal
-        document.getElementById('output').innerHTML = `
-        <strong>Cliente:</strong> ${clientName} <br>
-        <strong>Data:</strong> ${date} <br>
-        <strong>Custo da Mão de Obra:</strong> R$ ${totalLabor.toFixed(2)} <br>
-        <strong>Custo do ${materialUsed}:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
-        ${foamExchange === 'yes' ? `<strong>Custo da Espuma:</strong> R$ ${totalFoamCost.toFixed(2)} <br>`: ''}
-        <strong>Taxa de Entrega:</strong> R$ ${deliveryFee.toFixed(2)} (${isDeliveryFeeIncluded ? 'Inclusa': 'Não inclusa'}) <br>
-        <strong>Taxa de Materiais Essenciais:</strong> R$ ${essentialMaterialFee.toFixed(2)} (${isEssentialMaterialFeeIncluded ? 'Inclusa': 'Não inclusa'}) <br>
-        <strong>Custo Total:</strong> R$ ${totalCost.toFixed(2)}
-        `;
-        document.getElementById('myModal').style.display = "block";
-    }
-    function closeModal() {
-        document.getElementById('myModal').style.display = "none";
-    }
-
-    function copyToClipboard() {
-        const outputText = document.getElementById('output').innerText;
-        navigator.clipboard.writeText(outputText).then(() => {
-            alert("Orçamento completo copiado para a área de transferência!");
-        }, (err) => {
-            console.error('Erro ao copiar: ', err);
-        });
-    }
-
-    function copyTotal() {
-        // Obtém o elemento de saída
-        const outputElement = document.getElementById('output');
-        const materialUsed = document.getElementById('materialType').options[document.getElementById('materialType').selectedIndex].text;
-
-        // Verifica se o elemento existe
-        if (!outputElement) {
-            console.error('Elemento com o id "output" não encontrado.');
-            return;
+        /**
+         * Toggles the visibility of foam-related input fields based on user selection.
+         */
+        function toggleFoamOptions() {
+            if (elements.foamExchange.value === 'yes') {
+                elements.foamOptions.classList.remove('hidden');
+            } else {
+                elements.foamOptions.classList.add('hidden');
+            }
         }
 
-        // Usa expressão regular para capturar o custo total
-        const totalCostMatch = outputElement.innerText.match(/Custo Total: R\$ ([\d,.]+)/);
+        /**
+         * Calculates the total budget based on user inputs and displays it in a modal.
+         */
+        function calculateBudget() {
+            // Retrieve values, ensuring proper type conversion
+            const clientName = elements.clientName.value;
+            const date = elements.date.value;
+            const difficultyCost = parseFloat(elements.difficulty.value) || 0;
+            const materialTypeCost = parseFloat(elements.materialType.value) || 0;
+            const materialLength = parseFloat(elements.materialLength.value) || 0;
+            const foamExchange = elements.foamExchange.value;
+            const numSeats = parseInt(elements.numSeats.value) || 0;
+            const materialUsedText = elements.materialType.options[elements.materialType.selectedIndex].text;
+            const isDeliveryFeeIncluded = elements.deliveryFee.checked;
+            const isEssentialMaterialFeeIncluded = elements.essentialMaterialFee.checked;
 
-        // Verifica se a correspondência foi encontrada
-        if (!totalCostMatch || !totalCostMatch[1]) {
-            console.error('Não foi possível encontrar o custo total no texto de saída.');
-            return;
+            // Validate essential inputs
+            if (!clientName || !date || materialLength <= 0 || numSeats <= 0) {
+                alert('Por favor, preencha todos os campos obrigatórios e garanta que os valores numéricos sejam maiores que zero.');
+                return;
+            }
+
+            let totalFoamCost = 0;
+            if (foamExchange === 'yes') {
+                const foamLength = parseFloat(elements.foamLength.value) || 0;
+                const foamThickness = parseFloat(elements.foamThickness.value) || 0;
+
+                if (foamLength <= 0 || foamThickness <= 0) {
+                    alert('Por favor, insira valores válidos para comprimento e espessura da espuma.');
+                    return;
+                }
+                totalFoamCost = FEES.FOAM_PER_CM * foamThickness * foamLength;
+            }
+
+            const deliveryFee = isDeliveryFeeIncluded ? FEES.DELIVERY : 0;
+            const essentialMaterialFee = isEssentialMaterialFeeIncluded ? FEES.ESSENTIAL_MATERIAL : 0;
+
+            const totalMaterialCost = materialTypeCost * materialLength;
+            const totalLabor = difficultyCost * numSeats;
+            const totalCost = totalLabor + totalMaterialCost + totalFoamCost + deliveryFee + essentialMaterialFee;
+
+            // Update modal content
+            elements.output.innerHTML = `
+                <strong>Cliente:</strong> ${clientName} <br>
+                <strong>Data:</strong> ${date} <br>
+                <strong>Custo da Mão de Obra:</strong> R$ ${totalLabor.toFixed(2)} <br>
+                <strong>Custo do ${materialUsedText}:</strong> R$ ${totalMaterialCost.toFixed(2)} <br>
+                ${foamExchange === 'yes' ? `<strong>Custo da Espuma:</strong> R$ ${totalFoamCost.toFixed(2)} <br>` : ''}
+                <strong>Taxa de Entrega:</strong> R$ ${deliveryFee.toFixed(2)} (${isDeliveryFeeIncluded ? 'Inclusa' : 'Não inclusa'}) <br>
+                <strong>Taxa de Materiais Essenciais:</strong> R$ ${essentialMaterialFee.toFixed(2)} (${isEssentialMaterialFeeIncluded ? 'Inclusa' : 'Não inclusa'}) <br>
+                <strong>Custo Total:</strong> R$ ${totalCost.toFixed(2)}
+            `;
+
+            elements.modal.style.display = 'block';
         }
 
-        // Obtém o custo total
-        const totalCost = totalCostMatch[1];
-
-        // Verifica se materialUsed está definido
-        if (typeof materialUsed === 'undefined') {
-            console.error('A variável "materialUsed" não está definida.');
-            return;
+        /**
+         * Closes the budget result modal.
+         */
+        function closeModal() {
+            elements.modal.style.display = 'none';
         }
 
-        // Cria a mensagem a ser copiada
-        const message = `O orçamento no material ${materialUsed} ficou no total de R$ ${totalCost}.\n\nOferecemos parcelamento em até 3x sem juros.\nPara mais de 3 parcelas, há acréscimo da taxa da máquina.\n\nO prazo máximo de entrega é de 15 dias.\n\nIncluso frete e reparos estruturais se necessário!`;
-        // Copia a mensagem para a área de transferência
-        navigator.clipboard.writeText(message)
-        .then(() => {
-            alert("Valor total copiado para a área de transferência!");
-        })
-        .catch((err) => {
-            console.error('Erro ao copiar: ', err);
-        });
-    }
+        /**
+         * Copies the full budget details to the clipboard.
+         */
+        function copyToClipboard() {
+            const outputText = elements.output.innerText;
+            copyTextToClipboard(outputText, "Orçamento completo copiado para a área de transferência!");
+        }
+
+        /**
+         * Copies a predefined message including the total budget to the clipboard.
+         */
+        function copyTotal() {
+            const materialUsedText = elements.materialType.options[elements.materialType.selectedIndex].text;
+            const totalCostMatch = elements.output.innerText.match(/Custo Total: R\$ ([\d,.]+)/);
+
+            if (!totalCostMatch || !totalCostMatch[1]) {
+                alert('Não foi possível encontrar o custo total para copiar.');
+                return;
+            }
+
+            const totalCost = totalCostMatch[1];
+            const message = `O orçamento no material ${materialUsedText} ficou no total de R$ ${totalCost}.\n\nOferecemos parcelamento em até 3x sem juros.\nPara mais de 3 parcelas, há acréscimo da taxa da máquina.\n\nO prazo máximo de entrega é de 15 dias.\n\nIncluso frete e reparos estruturais se necessário!`;
+            copyTextToClipboard(message, "Valor total copiado para a área de transferência!");
+        }
+
+        /**
+         * Helper function to copy text to the clipboard and show an alert.
+         * @param {string} text The text to copy.
+         * @param {string} successMessage The message to display on successful copy.
+         */
+        function copyTextToClipboard(text, successMessage) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    alert(successMessage);
+                })
+                .catch(err => {
+                    console.error('Erro ao copiar: ', err);
+                    alert('Erro ao copiar para a área de transferência. Por favor, tente novamente.');
+                });
+        }
+    });
 </script>
 </body>
 </html>
